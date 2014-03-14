@@ -98,12 +98,12 @@ public class DataSetDescription implements Serializable {
 
     
     /**
-     * Get the discrete max
+     * Get the discrete range
      * @param i the attribute index
-     * @return the max of the attribute
+     * @return the range of the attribute
      */
     public int getDiscreteRange(int i) {
-        return (int) max.get(i) + 1;
+        return (int) (max.get(i) - min.get(i)) + 1;
     }
     
     /**
@@ -150,17 +150,17 @@ public class DataSetDescription implements Serializable {
     }
 
     /**
-     * Get the continuous max
+     * Get the continuous min
      * @param i the attribute index
-     * @return the max of the attribute
+     * @return the min of the attribute
      */
     public double getMin(int i) {
         return min.get(i);
     }
     
     /**
-     * Get the continuous max
-     * @return the max
+     * Get the continuous min
+     * @return the min
      */
     public double getMin() {
         return getMin(0);

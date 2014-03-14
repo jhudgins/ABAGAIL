@@ -2,7 +2,7 @@ package shared;
 
 import java.util.Arrays;
 import java.util.Iterator;
-
+import java.lang.StringBuilder;
 
 /**
  * A data set is just a collection of instances
@@ -118,11 +118,12 @@ public class DataSet implements Copyable, Iterable<Instance> {
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        String result = "Description:\n" + description + "\n";
+        StringBuilder builder = new StringBuilder();
+        builder.append("Description:\n" + description + "\n");
         for (int i = 0; i < instances.length; i++) {
-            result += instances[i] + "\n";
+            builder.append(instances[i] + "\n");
         }
-        return result;
+        return builder.toString();
     }
 
     @Override

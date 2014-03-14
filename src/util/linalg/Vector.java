@@ -2,6 +2,7 @@ package util.linalg;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.lang.StringBuilder;
 
 import shared.Copyable;
 
@@ -40,7 +41,7 @@ public abstract class Vector implements Serializable, Copyable {
         }
         return new DenseVector(result);
     }
-    
+
     /**
      * Set a portion of the vector
      * @param i the starting porition
@@ -291,14 +292,14 @@ public abstract class Vector implements Serializable, Copyable {
      */
     public String toString() {
         DecimalFormat df = new DecimalFormat("0.000000");
-        String result = "";
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < size(); i++) {
-            result += df.format(get(i));
+            builder.append(df.format(get(i)));
             if (i + 1 < size()) {
-                result += ", ";
+                builder.append(", ");
             }
         }
-        return result;
+        return builder.toString();
     }
 
 }

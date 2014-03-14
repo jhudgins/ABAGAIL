@@ -21,7 +21,7 @@ public class Instance implements Serializable, Copyable {
      * The vector storing the data
      */
     private Vector data;
-    
+
     /**
      * The weight of the instance
      */

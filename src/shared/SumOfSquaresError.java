@@ -19,11 +19,20 @@ public class SumOfSquaresError extends AbstractErrorMeasure
     public double value(Instance output, Instance example) {
         double sum = 0;
         Instance label = example.getLabel();
+        int labelIndex = label.getDiscrete();
         for (int i = 0; i < output.size(); i++) {
-            sum += (output.getContinuous(i) - label.getContinuous(i)) 
-                * (output.getContinuous(i) - label.getContinuous(i))
-                * example.getWeight();
+            // output should be 1 on labelIndex, 0 otherwise for "best fit"
+            double delta;
+            if (i == labelIndex) {
+                delta = 1.0 - output.getContinuous(i);
+            }
+            else {
+                delta = 0.0 - output.getContinuous(i);
+            }
+            
+            sum += delta * delta * example.getWeight();
         }
+        // divide by 2 to match gradient descent ANN derivation
         return .5 * sum;
     }
 

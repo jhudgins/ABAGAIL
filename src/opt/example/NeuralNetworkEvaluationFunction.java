@@ -53,8 +53,8 @@ public class NeuralNetworkEvaluationFunction implements EvaluationFunction {
             network.run();
             error += measure.value(new Instance(network.getOutputValues()), examples.get(i));
         }
-        // the fitness is 1 / error
-        return 1 / error;
+        // the fitness is negative error (1/error will be NaN if error is 0)
+        return -error;
     }
 
 }

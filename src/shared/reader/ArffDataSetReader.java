@@ -63,14 +63,23 @@ public class ArffDataSetReader extends DataSetReader {
 					// process any attribute values
 				    //NOTE: for REAL and INTEGER types, this will do nothing but those types are handled
 				    // in processInstances
-					String[] values = parts[2].replaceAll(" |\\{|\\}|'","").split(",");
-					double id = 0.0;
-					Map<String, Double> valMap = new HashMap<String, Double>();
-					for (String s : values) {
-					    s = s.trim(); //trim off whitespace
-						valMap.put(s, id++);
-					}
-					attributes.add(valMap);
+                    // remove whitespace
+                    String target = parts[2].replaceAll(" |'", "");
+
+                    // if this is a nominal attribute (ie leading '{')
+                    if (target.charAt(0) == '{') {
+                        String[] values = parts[2].replaceAll(" |\\{|\\}|'","").split(",");
+                        double id = 0.0;
+                        Map<String, Double> valMap = new HashMap<String, Double>();
+                        for (String s : values) {
+                            s = s.trim(); //trim off whitespace
+                            valMap.put(s, id++);
+                        }
+                        attributes.add(valMap);
+                    }
+                    else {
+                        attributes.add(null);
+                    }
 				}
 			}
 			line = in.readLine();
@@ -78,29 +87,49 @@ public class ArffDataSetReader extends DataSetReader {
 		return attributes;
 	}
 
+    /**
+     *  Parse individual value, mapping to correct index
+     */
+    private double parseValue(String v,
+			Map<String, Double> valueMap) throws NumberFormatException {
+        
+        //some values are single quoted (especially in datafiles bundled
+        // with weka)
+        v = v.replaceAll("'", "");
+        // defaulting to 0 if attribute value unknown.
+        double d = 0;
+        if (valueMap == null) {
+            d = Double.parseDouble(v);
+        }
+        else {
+            if (valueMap.containsKey(v)) {
+                d = valueMap.get(v);
+            }
+        }
+        return d;
+    }
+
 	private Instance[] processInstances(BufferedReader in,
 			List<Map<String, Double>> valueMaps) throws IOException {
 		List<Instance> instances = new ArrayList<Instance>();
 		String line = in.readLine();
 		Pattern pattern = Pattern.compile("[ ,]+");
+        boolean[] flaggedNumberException = new boolean[valueMaps.size()];
 		while (line != null) {
 			if (!line.isEmpty() && line.charAt(0) != '%') {
 				String[] values = pattern.split(line.trim());
 				double[] ins = new double[values.length];
 				for (int i = 0; i < values.length; i++) {
-				    //some values are single quoted (especially in datafiles bundled
-				    // with weka)
-					String v = values[i].replaceAll("'", "");
-					// defaulting to 0 if attribute value unknown.
 					double d = 0;
-					try {
-	                	d = Double.parseDouble(v);
-	                }
-	                catch(NumberFormatException e){
-	                	if (valueMaps.get(i).containsKey(v)) {
-							d = valueMaps.get(i).get(v);
-						}
-	                }
+                    try {
+                        d = parseValue(values[i], valueMaps.get(i));
+                    }
+                    catch(NumberFormatException e) {
+                        if (!flaggedNumberException[i]) {
+                            System.out.println("Attribute " + i + " non-real. Only reals currrently handled\n");
+                        }
+                        flaggedNumberException[i] = true;
+                    }
 					ins[i] = d;
 				}
 				Instance i = new Instance(ins);
