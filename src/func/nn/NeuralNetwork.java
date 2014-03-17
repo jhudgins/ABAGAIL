@@ -5,6 +5,7 @@ package func.nn;
 import java.io.Serializable;
 import java.util.List;
 
+import shared.Instance;
 import util.linalg.Vector;
 
 /**
@@ -76,4 +77,21 @@ public abstract class NeuralNetwork implements Serializable {
         }
     }
 
+    /**
+     * Count the number of instances that are correctly labeled
+     * @param instances the instances to label
+     */
+    public int countCorrect(Instance[] instances) {
+        int correct = 0;
+        for (int i=0; i<instances.length; i++) {
+            setInputValues(instances[i].getData());
+            run();
+            int predicted = getOutputValues().argMax();
+            int actual = instances[i].getLabel().getDiscrete();
+            if (predicted == actual) {
+                correct++;
+            }
+        }
+        return correct;
+    }
 }
