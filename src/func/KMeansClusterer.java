@@ -1,13 +1,16 @@
 package func;
 
+import java.text.DecimalFormat;
+
 import shared.DataSet;
 import shared.DistanceMeasure;
 import shared.EuclideanDistance;
 import shared.Instance;
 import util.linalg.DenseVector;
-import dist.*;
-import dist.Distribution;
+import util.linalg.Vector;
+import dist.AbstractConditionalDistribution;
 import dist.DiscreteDistribution;
+import dist.Distribution;
 
 /**
  * A K means clusterer
@@ -19,6 +22,24 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
      * The cluster centers
      */
     private Instance[] clusterCenters;
+    private int[] assignments;
+    private double[] assignmentCount;
+
+    // useful stats 
+    double[] meanDist;
+    double[] minDist;
+    double[] maxDist;
+    double[] varience;
+
+    double[] meanNextClosest;
+    double[] minNextClosest;
+    double[] maxNextClosest;
+
+    double[] volume;
+ 
+    int iterations;
+
+    private static DecimalFormat df = new DecimalFormat("0.00000");
     
     /**
      * The number of clusters
@@ -35,9 +56,13 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
      * @param k the k value
      * @param distanceMeasure the distance measure
      */
-    public KMeansClusterer(int k) {
+    public KMeansClusterer(int k, DistanceMeasure distanceMeasure) {
         this.k = k;
-        this.distanceMeasure = new EuclideanDistance();
+        this.distanceMeasure = distanceMeasure;
+    }
+
+    public KMeansClusterer(int k) {
+    	this(k, new EuclideanDistance());
     }
     
     /**
@@ -81,21 +106,30 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
      * @see func.FunctionApproximater#estimate(shared.DataSet)
      */
     public void estimate(DataSet set) {
+        estimate(set, 1000, 0.01);
+    }
+
+    public void estimate(DataSet set, int maxIterations, double stopAtProportionChanged) {
         clusterCenters = new Instance[k];
-        int[] assignments = new int[set.size()];
+        assignmentCount = new double[k];
+        assignments = new int[set.size()];
         // random initial centers
         for (int i = 0; i < clusterCenters.length; i++) {
             int pick;
             do {
                 pick = Distribution.random.nextInt(set.size());
             } while (assignments[pick] != 0);
-            assignments[pick] = 1;
+            assignments[pick] = i;
             clusterCenters[i] = (Instance) set.get(pick).copy();
         }
-        boolean changed = false;
+        int changed = 0;
+        iterations = 0;
         // the main loop
         do {
-            changed = false;
+            changed = 0;
+            for (int cluster=0; cluster<k; cluster++) {
+            	assignmentCount[cluster] = 0;
+            }
             // make the assignments
             for (int i = 0; i < set.size(); i++) {
                 // find the closest center
@@ -111,12 +145,11 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
                     }
                 }
                 if (assignments[i] != closest) {
-                    changed = true;
+                    changed++;
                 }
                 assignments[i] = closest;
             }
-            if (changed) {
-                double[] assignmentCount = new double[k];
+            if (changed > 0) {
                 // make the new clusters
                 for (int i = 0; i < k; i++) {
                     clusterCenters[i].setData(new DenseVector(
@@ -131,7 +164,98 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
                     clusterCenters[i].getData().timesEquals(1/assignmentCount[i]);
                 }
             }
-        } while (changed);
+            iterations++;
+        } while (changed > stopAtProportionChanged * set.size() && iterations < maxIterations);
+
+        // do some descriptive analysis
+        meanDist = new double[k];
+        minDist = new double[k];
+        maxDist = new double[k];
+        varience = new double[k];
+
+        meanNextClosest = new double[k];
+        minNextClosest = new double[k];
+        maxNextClosest = new double[k];
+
+        volume = new double[k];
+        Vector minDim[] = new Vector[k];
+        Vector maxDim[] = new Vector[k];
+        int dimensions = set.get(0).getData().size();
+
+        // intialize min max values
+        for (int cluster=0; cluster<k; cluster++) {
+            minDist[cluster] = Double.MAX_VALUE;
+            minNextClosest[cluster] = Double.MAX_VALUE;
+            maxDist[cluster] = -Double.MAX_VALUE;
+            maxNextClosest[cluster] = -Double.MAX_VALUE;
+
+            double[] minDimValues = new double[dimensions];
+            double[] maxDimValues = new double[dimensions];
+            for (int j=0; j<dimensions; j++) {
+                minDimValues[j] = Double.MAX_VALUE;
+                maxDimValues[j] = -Double.MAX_VALUE;
+            }
+            minDim[cluster] = new DenseVector(minDimValues);
+            maxDim[cluster] = new DenseVector(maxDimValues);
+        }
+
+        // calculate first pass values
+        for (int i=0; i<set.size(); i++) {
+            int cluster = assignments[i];
+
+            // calculate distance to centroid
+            double distance = distanceMeasure.value(set.get(i), clusterCenters[cluster]);
+            meanDist[cluster] += distance;
+            minDist[cluster] = Math.min(minDist[cluster], distance);
+            maxDist[cluster] = Math.max(maxDist[cluster], distance);
+
+            // collect min and max of each dimension for this cluster
+            for (int dim=0; dim<dimensions; dim++) {
+                minDim[cluster].set(dim, Math.min(minDim[cluster].get(dim), set.get(i).getContinuous(dim)));
+                maxDim[cluster].set(dim, Math.max(maxDim[cluster].get(dim), set.get(i).getContinuous(dim)));
+            }
+
+            // find closest centroid (not my own)
+            double closestDist = Double.MAX_VALUE;
+            for (int j=0; j<k; j++) {
+                if (j != cluster) {
+                    closestDist = Math.min(closestDist, distanceMeasure.value(set.get(i), clusterCenters[j]));
+                }
+            }
+
+            meanNextClosest[cluster] += closestDist;
+            minNextClosest[cluster] = Math.min(closestDist, minNextClosest[cluster]);
+            maxNextClosest[cluster] = Math.max(closestDist, maxNextClosest[cluster]);
+        }
+
+        // divide to get means and calculate volume
+        double maxVolume = 0.;
+        for (int cluster=0; cluster<k; cluster++) {
+            meanDist[cluster] /= assignmentCount[cluster];
+            meanNextClosest[cluster] /= assignmentCount[cluster];
+            Vector delta = maxDim[cluster].minus(minDim[cluster]);
+            volume[cluster] = 1.;
+            for (int dim=0; dim<dimensions; dim++) {
+                volume[cluster] *= delta.get(dim);
+            }
+            maxVolume = Math.max(maxVolume, volume[cluster]);
+        }
+
+        // normalize volumes
+        for (int cluster=0; cluster<k; cluster++) {
+            volume[cluster] /= maxVolume;
+        }
+
+        // calculate varience
+        for (int i=0; i<set.size(); i++) {
+            int cluster = assignments[i];
+            assert cluster < k && cluster > 0;
+
+            // calculate distance to centroid
+            double distance = distanceMeasure.value(set.get(i), clusterCenters[cluster]);
+            double delta = distance - meanDist[cluster];
+            varience[cluster] += (delta * delta) / assignmentCount[cluster];
+        }
     }
 
     /**
@@ -153,12 +277,25 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        String result = "k = " + k + "\n";
-        for (int i = 0; i < clusterCenters.length; i++) {
-            result += clusterCenters[i].toString() + "\n";
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("k = " + k + ", iterations = " + iterations + "\n");
+        stringBuilder.append("instances,meanToCentroid,minToCentroid,maxToCentroid,stdDevToCentroid,"
+                             + "meanToNextCentroid,minToNextCentroid,maxToNextCentroid,normalizedVolume\n");
+
+        for (int cluster=0; cluster<k; cluster++) {
+            stringBuilder.append(assignmentCount[cluster] + ",");
+            stringBuilder.append(df.format(meanDist[cluster]) + ",");
+            stringBuilder.append(df.format(minDist[cluster]) + ",");
+            stringBuilder.append(df.format(maxDist[cluster]) + ",");
+            stringBuilder.append(df.format(Math.sqrt(varience[cluster])) + ",");
+
+            stringBuilder.append(df.format(meanNextClosest[cluster]) + ",");
+            stringBuilder.append(df.format(minNextClosest[cluster]) + ",");
+            stringBuilder.append(df.format(maxNextClosest[cluster]) + ",");
+
+            stringBuilder.append(df.format(volume[cluster]) + "\n");
         }
-        return result;
+
+        return stringBuilder.toString();
     }
-
-
 }
