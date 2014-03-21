@@ -1,5 +1,6 @@
 package dist;
 
+import java.text.DecimalFormat;
 import java.util.Arrays;
 
 import shared.Copyable;
@@ -15,11 +16,14 @@ import shared.Instance;
  */
 public class MixtureDistribution extends AbstractDistribution implements Copyable {
     
+    private static DecimalFormat df = new DecimalFormat("0.000");
     /**
      * The knowledge of appropriate distributions
      */
     private Distribution[] components;
     
+    private double[][] componentProbabilities;
+
     /**
      * The confidence in the  distributions
      */
@@ -47,9 +51,9 @@ public class MixtureDistribution extends AbstractDistribution implements Copyabl
      */
     public void estimate(DataSet observations) {
         // the mixing weights
-    		double[] mixingWeights = componentDistribution.getProbabilities();
+    	double[] mixingWeights = componentDistribution.getProbabilities();
         // the individual probabilities
-        double[][] componentProbabilities = new double[components.length][observations.size()];
+        componentProbabilities = new double[components.length][observations.size()];
         // the old weights of the observations
         double[] weights = new double[observations.size()];
         for (int i = 0; i < weights.length; i++) {
@@ -139,11 +143,38 @@ public class MixtureDistribution extends AbstractDistribution implements Copyabl
      * @see java.lang.Object#toString()
      */
     public String toString() {
-        String result = componentDistribution.toString() + "\n";
+        StringBuilder stringBuilder = new StringBuilder();
+        int[] bestProbabilities = new int[5];
+        for (int i=0; i<componentProbabilities[0].length; i++) {
+            double bestProbability = 0.;
+            for (int j=0; j<componentProbabilities.length; j++) {
+                bestProbability = Math.max(bestProbability, componentProbabilities[j][i]);
+                //if (componentProbabilities[j][i] > bestProbability) {
+                //    bestProbability = max(bestProbability, componentProbabilities[j][i]);
+                //}
+            }
+            bestProbabilities[(int)(bestProbability * 4.99)]++;
+        }
+
+        stringBuilder.append("Best probabilities:  <0.2:" + bestProbabilities[0] +
+                                " in [0.2,0.4]:" + bestProbabilities[1] +
+                                " in [0.4,0.6]:" + bestProbabilities[2] +
+                                " in [0.6,0.8]:" + bestProbabilities[3] +
+                                " in [0.8,1.0]:" + bestProbabilities[4] + "\n");
+        stringBuilder.append("distribution proportion for each cluster:\n");
+        stringBuilder.append("  ");
+
+        double[] probabilities = componentDistribution.getProbabilities();
+        for (int i=0; i<probabilities.length; i++) {
+            stringBuilder.append(df.format(probabilities[i]) + ", ");
+        }
+        /*
         for (int i = 0; i < components.length; i++) {
             result += components[i] + "\n";
         }
         return result + "\n";
+        */
+        return stringBuilder.toString();
     }
 
     /**

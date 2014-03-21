@@ -122,10 +122,10 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
             assignments[pick] = i;
             clusterCenters[i] = (Instance) set.get(pick).copy();
         }
-        int changed = 0;
+        int changed = set.size();
         iterations = 0;
         // the main loop
-        do {
+        while (changed > stopAtProportionChanged * set.size() && iterations < maxIterations) {
             changed = 0;
             for (int cluster=0; cluster<k; cluster++) {
             	assignmentCount[cluster] = 0;
@@ -165,7 +165,7 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
                 }
             }
             iterations++;
-        } while (changed > stopAtProportionChanged * set.size() && iterations < maxIterations);
+        }
 
         // do some descriptive analysis
         meanDist = new double[k];

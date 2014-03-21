@@ -62,7 +62,14 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
         this.tolerance = tolerance;
         this.maxIterations = maxIterations;
     }
-    
+
+     /**
+     * Make a new clusterer
+     */
+    public EMClusterer(int k) {
+        this(k, TOLERANCE, MAX_ITERATIONS);
+    }
+
     /**
      * Make a new clusterer
      */
@@ -98,9 +105,11 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
      * @see func.FunctionApproximater#estimate(shared.DataSet)
      */
     public void estimate(DataSet set) {
-        // kmeans initialization
+        // do a couple of the kmeans iterations to initialize our means
         KMeansClusterer kmeans = new KMeansClusterer(k);
-        kmeans.estimate(set);
+        kmeans.estimate(set, 2, .1);
+
+
         double[] prior = new double[k];
         double weightSum = 0;
         int[] counts = new int[k];
@@ -148,6 +157,9 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
                 || (iterations + 1 >= maxIterations);
             lastLogLikelihood = logLikelihood;
             iterations++;
+            if (iterations%10==0) {
+            	System.out.println("\nAt iteration:" + iterations + "\n" + toString());
+            }
         }
     }
 
