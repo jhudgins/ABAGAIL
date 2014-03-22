@@ -37,7 +37,7 @@ public class DataSet implements Copyable, Iterable<Instance> {
     public DataSet(Instance[] instances) {
         this.instances = instances;
     }
-    
+
     /**
      * Get the size of the data set
      * @return the size of the data set
@@ -113,7 +113,38 @@ public class DataSet implements Copyable, Iterable<Instance> {
         }
         return new DataSet(labels, labelDescription);
     }
-    
+
+    /**
+     * Append data set to this
+     * @param dataSet the dataSet to append to this
+     */
+    public void appendCopy(DataSet dataSet) {
+        Instance[] newInstances = new Instance[this.instances.length + dataSet.instances.length];
+        for (int i=0; i<this.instances.length; i++) {
+            newInstances[i] = this.instances[i];
+        }
+        for (int i=0; i<dataSet.instances.length; i++) {
+            newInstances[i+this.instances.length] = (Instance) dataSet.instances[i].copy();
+        }
+        this.instances = newInstances;
+    }
+
+    /**
+     * Split into a new data set
+     * @param startIndex index of starting instance
+     * @param num number of instances to split into the new data set
+     */
+    public DataSet splitNew(int startIndex, int num)
+    {
+        Instance[] copy = new Instance[num];
+        for (int i = 0; i < num; i++) {
+            copy[i] = (Instance) this.get(startIndex + i).copy();
+        }
+        DataSet newSet = new DataSet(copy);
+        newSet.setDescription(new DataSetDescription(newSet));
+        return newSet;
+    }
+
     /**
      * @see java.lang.Object#toString()
      */

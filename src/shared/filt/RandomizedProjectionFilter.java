@@ -12,7 +12,7 @@ import util.linalg.SingularValueDecomposition;
  * @author Andrew Guillory gtg008g@mail.gatech.edu
  * @version 1.0
  */
-public class RandomizedProjectionFilter implements ReversibleFilter {
+public class RandomizedProjectionFilter implements ProjectionFilter {
     /**
      * The projection itself
      */

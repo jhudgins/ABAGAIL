@@ -6,6 +6,7 @@ import shared.DataSet;
 import shared.DistanceMeasure;
 import shared.EuclideanDistance;
 import shared.Instance;
+import util.PythonOut;
 import util.linalg.DenseVector;
 import util.linalg.Vector;
 import dist.AbstractConditionalDistribution;
@@ -40,7 +41,7 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
     int iterations;
 
     private static DecimalFormat df = new DecimalFormat("0.00000");
-    
+
     /**
      * The number of clusters
      */
@@ -272,7 +273,37 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
     public Instance[] getClusterCenters() {
         return clusterCenters;
     }
-        
+
+    public void toPython(String name) {
+    	StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(PythonOut.prefix + "['" + name + "'] = {\n");
+        stringBuilder.append("  'numClusters':" + k + ",\n");
+        stringBuilder.append("  'iterations':" + iterations + ",\n");
+        stringBuilder.append("  'clusters':\n");
+        stringBuilder.append("    [\n");
+
+        for (int cluster=0; cluster<k; cluster++) {
+            stringBuilder.append("      {\n");
+            stringBuilder.append("        'instances':" + assignmentCount[cluster] + ",\n");
+            stringBuilder.append("        'meanToCentroid':" + PythonOut.format(meanDist[cluster]) + ",\n");
+            stringBuilder.append("        'minToCentroid':" + PythonOut.format(minDist[cluster]) + ",\n");
+            stringBuilder.append("        'maxToCentroid':" + PythonOut.format(maxDist[cluster]) + ",\n");
+            stringBuilder.append("        'stdDevToCentroid':" + PythonOut.format(Math.sqrt(varience[cluster])) + ",\n");
+
+            stringBuilder.append("        'meanToNextCentroid':" + PythonOut.format(meanNextClosest[cluster]) + ",\n");
+            stringBuilder.append("        'minToNextCentroid':" + PythonOut.format(minNextClosest[cluster]) + ",\n");
+            stringBuilder.append("        'maxToNextCentroid':" + PythonOut.format(maxNextClosest[cluster]) + ",\n");
+
+            stringBuilder.append("        'normalizedVolume':" + PythonOut.format(volume[cluster]) + "\n");
+            stringBuilder.append("      },\n");
+        }
+
+        stringBuilder.append("    ],\n");
+        stringBuilder.append("}\n");
+        PythonOut.write(stringBuilder.toString());
+    }
+
+       
     /**
      * @see java.lang.Object#toString()
      */

@@ -6,6 +6,7 @@ import java.util.Arrays;
 import shared.Copyable;
 import shared.DataSet;
 import shared.Instance;
+import util.PythonOut;
 
 
 /**
@@ -139,6 +140,20 @@ public class MixtureDistribution extends AbstractDistribution implements Copyabl
         return probability;
     }
     
+    public void pythonOut(String name) {
+        int[] bestProbabilities = new int[10];
+        for (int i=0; i<componentProbabilities[0].length; i++) {
+            double bestProbability = 0.;
+            for (int j=0; j<componentProbabilities.length; j++) {
+                bestProbability = Math.max(bestProbability, componentProbabilities[j][i]);
+            }
+            bestProbabilities[(int)(bestProbability * 9.99)]++;
+        }
+        PythonOut.write(name+"BestProbabilities", bestProbabilities);
+
+        PythonOut.write(name+"Distribution", componentDistribution.getProbabilities());
+    }
+
     /**
      * @see java.lang.Object#toString()
      */

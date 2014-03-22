@@ -16,7 +16,7 @@ import util.linalg.Vector;
  * @author Andrew Guillory gtg008g@mail.gatech.edu
  * @version 1.0
  */
-public class InsignificantComponentAnalysis implements ReversibleFilter {
+public class InsignificantComponentAnalysis implements ProjectionFilter {
     /**
      * The default threshold
      */

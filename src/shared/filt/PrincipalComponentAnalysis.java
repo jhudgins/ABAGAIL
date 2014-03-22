@@ -14,7 +14,7 @@ import util.linalg.Vector;
  * @author Andrew Guillory gtg008g@mail.gatech.edu
  * @version 1.0
  */
-public class PrincipalComponentAnalysis implements ReversibleFilter {
+public class PrincipalComponentAnalysis implements ProjectionFilter {
     /**
      * The default threshold
      */

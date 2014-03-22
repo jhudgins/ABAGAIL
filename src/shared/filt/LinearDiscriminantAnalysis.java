@@ -18,7 +18,7 @@ import util.linalg.Vector;
  * @author Andrew Guillory gtg008g@mail.gatech.edu
  * @version 1.0
  */
-public class LinearDiscriminantAnalysis implements ReversibleFilter {
+public class LinearDiscriminantAnalysis implements ProjectionFilter {
     
     /**
      * The projection matrix

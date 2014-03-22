@@ -158,7 +158,7 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
             lastLogLikelihood = logLikelihood;
             iterations++;
             if (iterations%10==0) {
-            	System.out.println("\nAt iteration:" + iterations + "\n" + toString());
+                mixture.pythonOut("emCluster_iter_"+iterations);
             }
         }
     }

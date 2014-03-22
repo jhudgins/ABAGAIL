@@ -233,7 +233,7 @@ public class Instance implements Serializable, Copyable {
     public void setWeight(double d) {
         weight = d;
     }
-    
+
     /**
      * Make a new instance
      * @return the copy

@@ -16,7 +16,7 @@ import util.linalg.Vector;
  * @author Andrew Guillory gtg008g@mail.gatech.edu
  * @version 1.0
  */
-public class IndependentComponentAnalysis implements ReversibleFilter {
+public class IndependentComponentAnalysis implements ProjectionFilter {
     /**
      * The projection matrix
      */
