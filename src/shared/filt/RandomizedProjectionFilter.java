@@ -39,6 +39,9 @@ public class RandomizedProjectionFilter implements ProjectionFilter {
     public void filter(DataSet dataSet) {
         for (int i = 0; i < dataSet.size(); i++) {
             Instance instance = dataSet.get(i);
+            if (instance.size() != projection.n()) {
+                throw new RuntimeException("RandomizedProjectionFilter input dimensions, " + projection.n() + ", don't match instances, " + instance.size());
+            }
             instance.setData(projection.times(instance.getData()));
         }
         dataSet.setDescription(new DataSetDescription(dataSet));

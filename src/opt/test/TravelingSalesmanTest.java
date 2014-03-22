@@ -25,6 +25,7 @@ import opt.prob.GenericProbabilisticOptimizationProblem;
 import opt.prob.MIMIC;
 import opt.prob.ProbabilisticOptimizationProblem;
 import shared.FixedIterationTrainer;
+import util.RandomFactory;
 
 /**
  * 
@@ -39,7 +40,7 @@ public class TravelingSalesmanTest {
      * @param args ignored
      */
     public static void main(String[] args) {
-        Random random = new Random();
+        Random random = RandomFactory.newRandom();
         // create the random points
         double[][] points = new double[N][2];
         for (int i = 0; i < points.length; i++) {

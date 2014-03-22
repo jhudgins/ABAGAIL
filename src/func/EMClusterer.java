@@ -120,6 +120,29 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
             prior[classifications[i]] += set.get(i).getWeight();
             weightSum += set.get(i).getWeight();
         }
+
+        // make sure each cluster starts with at least one instance
+        for (int cluster=0; cluster<k; cluster++) {
+            if (counts[cluster] == 0) {
+                // find cluster with more than 1 instance
+                for (int j=0; j<k; j++) {
+                    if (counts[j] > 1) {
+                        // move the first instance in this cluster into our empty cluster
+                        counts[j]--;
+                        counts[cluster]++;
+                        for (int i=0; i<classifications.length; i++) {
+                            if (classifications[i] == j) {
+                                classifications[i] = cluster;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+
         // create data sets for each of the classes
         Instance[][] instances = new Instance[k][];
         for (int i = 0; i < instances.length; i++) {

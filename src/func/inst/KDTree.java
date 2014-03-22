@@ -8,6 +8,8 @@ import shared.*;
 import shared.DataSet;
 import shared.Instance;
 
+import util.RandomFactory;
+
 /**
  * A KDTree implementation
  * Algorithms from Andrew Moore's tutorial
@@ -19,7 +21,7 @@ public class KDTree implements Serializable {
     /**
      * Random number generator
      */
-    private static final Random random = new Random();
+    private static final Random random = RandomFactory.newRandom();
 
     /** 
      * The head node of the kd tree

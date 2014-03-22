@@ -5,6 +5,8 @@ package func.nn;
 import java.io.Serializable;
 import java.util.Random;
 
+import util.RandomFactory;
+
 /**
  * A link between two nodes in a neural network
  * @author Andrew Guillory gtg008g@mail.gatech.edu
@@ -14,7 +16,7 @@ public class Link implements Serializable {
     /**
      * The random number generator
      */
-    private static Random random = new Random();
+    private static Random random = RandomFactory.newRandom();
 	
 	/**
 	 * The weight

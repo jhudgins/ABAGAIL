@@ -15,6 +15,8 @@ import dist.hmm.ModularHiddenMarkovModel;
 import dist.hmm.SimpleStateDistributionTable;
 import dist.hmm.StateDistribution;
 
+import util.RandomFactory;
+
 /**
  * A test class for testing long term dependencies
  * @author Andrew Guillory gtg008g@mail.gatech.edu
@@ -77,7 +79,7 @@ public class HMMConditionalMonsterTest {
         model.setInitialStateDistribution(
         new SimpleStateDistributionTable(DiscreteDistributionTable.random(INPUT_RANGE, STATE_COUNT).getProbabilityMatrix()));
         Instance[][] sequences = new Instance[SEQUENCE_COUNT][];
-        Random random = new Random();
+        Random random = RandomFactory.newRandom();
         for (int i = 0; i < sequences.length; i++) {
             sequences[i] = new Instance[SEQUENCE_LENGTH];
             boolean smellSomething = random.nextBoolean();

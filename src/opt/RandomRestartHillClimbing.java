@@ -5,6 +5,7 @@ import java.util.Random;
 
 import shared.Instance;
 import util.linalg.Vector;
+import util.RandomFactory;
 
 /**
  * Random restart hill climbing
@@ -61,7 +62,7 @@ public class RandomRestartHillClimbing extends OptimizationAlgorithm {
     private double[] mIncrementForDim;
     private ArrayList<FitnessStats> mFitnessStats = new ArrayList<FitnessStats>();
     
-    private Random mRandom = new Random();
+    private Random mRandom = RandomFactory.newRandom();
     /**
      * Make a new randomized hill climbing
      */
