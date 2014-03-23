@@ -11,7 +11,7 @@ public class RandomFactory {
     public static Random newRandom() {
         Random random = new Random();
         // comment/uncomment to get diverse/consistent behavior
-        random.setSeed(1234);
+        // random.setSeed(1234);
         return random;
     }
 }
