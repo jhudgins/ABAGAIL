@@ -2,7 +2,11 @@ package shared;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.lang.StringBuilder;
+
+import util.linalg.DenseVector;
+import util.linalg.Matrix;
+import util.linalg.RectangularMatrix;
+import util.linalg.Vector;
 
 /**
  * A data set is just a collection of instances
@@ -144,6 +148,49 @@ public class DataSet implements Copyable, Iterable<Instance> {
         newSet.setDescription(new DataSetDescription(newSet));
         return newSet;
     }
+
+    /**
+     * calculate the "kurtosis" of the dataset
+     * @return kurtosis vector for each dimension
+     */
+
+    // Adapted from:
+    // https://github.com/poplav92/OnlineKurtosisSkewnessVariance/blob/master/src/OnlineKurtosisSkewnessVariance.cpp
+    // by Herman Sheremetyev
+    private static double calculateKurtosis(Vector vector) {
+        double n = 0, mean = 0, m2 = 0, m3 = 0, m4 = 0;
+        for(int i=0; i < vector.size(); i++) {
+            double n1 = n;
+            n++;
+            double delta = vector.get(i) - mean;
+            double delta_n = delta / n;
+            double delta_n2 = delta_n * delta_n;
+            double term1 = delta * delta_n * n1;
+            mean = mean + delta_n;
+            m4 = m4 + term1 * delta_n2 * (n*n - 3*n + 3) + 6 * delta_n2 * m2 - 4 * delta_n * m3;
+            m3 = m3 + term1 * delta_n * (n - 2) - 3 * delta_n * m2;
+            m2 = m2 + term1;
+        }
+        double kurtosis = (n*m4) / (m2*m2) - 3;
+        return kurtosis;
+    }
+   
+    public Vector calculateKurtosis() {
+        int rows = instances.length;
+        int columns = instances[0].size();
+        Matrix m = new RectangularMatrix(rows, columns);
+        for (int i = 0; i < rows; i++) {
+            m.setRow(i, instances[i].getData());
+        }
+
+        DenseVector result = new DenseVector(columns);
+        for (int i = 0; i < columns; i++) {
+            result.set(i, calculateKurtosis(m.getColumn(i)));
+        }
+        
+        return result;
+    }
+
 
     /**
      * @see java.lang.Object#toString()

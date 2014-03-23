@@ -114,7 +114,11 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
         clusterCenters = new Instance[k];
         assignmentCount = new double[k];
         assignments = new int[set.size()];
+
         // random initial centers
+        // Note: if there are identical points this might cause two clusters to have the same
+        // centroid. This will get fixed by updateAssignmentCount where clusters with zero
+        // members get a new location
         for (int i = 0; i < clusterCenters.length; i++) {
             int pick;
             do {
@@ -130,29 +134,17 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
         while (changed > stopAtProportionChanged * set.size() && iterations < maxIterations) {
             changed = 0;
 
-            // keep track of the largest of the distances to the new assignments in case we have a cluster with
-            // no instances 
-            double largestDist = 0.;
-            int largestDistIdx = 0;
-
             // make the assignments
             for (int i = 0; i < set.size(); i++) {
                 // find the closest center
                 int closest = 0;
                 double closestDistance = distanceMeasure.value(set.get(i), clusterCenters[0]);
                 for (int j = 1; j < k; j++) {
-                    double distance = distanceMeasure
-                        .value(set.get(i), clusterCenters[j]);
+                    double distance = distanceMeasure.value(set.get(i), clusterCenters[j]);
                     if (distance < closestDistance) {
                         closestDistance = distance;
                         closest = j;
                     }
-                }
-
-                // check largest distance
-                if (closestDistance > largestDist) {
-                    largestDist = closestDistance;
-                    largestDistIdx = i;
                 }
 
                 if (assignments[i] != closest) {
@@ -163,22 +155,7 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
 
             // make updates if we have changed
             if (changed > 0) {
-                // update assignmentCount
-                for (int cluster=0; cluster<k; cluster++) {
-                	assignmentCount[cluster] = 0;
-                }
-                for (int i = 0; i < set.size(); i++) {
-                    assignmentCount[assignments[i]] += set.get(i).getWeight();    
-                }
-                // check for 0 assignment count and assign the instance that is farthest from any centroids
-                for (int cluster=0; cluster<k; cluster++) {
-                	if (assignmentCount[cluster] == 0) {
-                        assignmentCount[cluster] += set.get(largestDistIdx).getWeight();
-                        assignmentCount[assignments[largestDistIdx]] -= set.get(largestDistIdx).getWeight();
-                        assignments[largestDistIdx] = cluster;
-                    }
-                }
-
+                updateAssignmentCount(set);
                 // make the new clusters
                 for (int i = 0; i < k; i++) {
                     clusterCenters[i].setData(new DenseVector(
@@ -195,6 +172,47 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
             iterations++;
         }
 
+        cacluateStats(set);
+    }
+
+    private void updateAssignmentCount(DataSet set) {
+        // initialize to zero
+        for (int cluster=0; cluster<k; cluster++) {
+            assignmentCount[cluster] = 0;
+        }
+        int zeroCount;
+
+        // count assignments for clusters
+        for (int i = 0; i < set.size(); i++) {
+            assignmentCount[assignments[i]] += set.get(i).getWeight();    
+        }
+        // check for 0 assignment count and assign the instance that is farthest from any centroids
+        for (int cluster=0; cluster<k; cluster++) {
+            if (assignmentCount[cluster] == 0) {
+                // find largest distance
+                double largestDistance = 0;
+                int largestDistIdx = 0;
+                for (int i=0; i<set.size(); i++) {
+                    double distance = distanceMeasure.value(set.get(i), clusterCenters[assignments[i]]);
+                    if (distance > largestDistance) {
+                        largestDistance = distance;
+                        largestDistIdx = i;
+                    }
+                }
+                assignmentCount[cluster] += set.get(largestDistIdx).getWeight();
+                assignmentCount[assignments[largestDistIdx]] -= set.get(largestDistIdx).getWeight();
+                assignments[largestDistIdx] = cluster;
+                Instance instance = set.get(largestDistIdx);
+                clusterCenters[cluster].setData(new DenseVector(instance.size()));
+                clusterCenters[cluster].getData().plusEquals(instance.getData().times(instance.getWeight()));
+            }
+        }
+    }
+
+
+
+    private void cacluateStats(DataSet set)
+    {
         // do some descriptive analysis
         meanDist = new double[k];
         minDist = new double[k];

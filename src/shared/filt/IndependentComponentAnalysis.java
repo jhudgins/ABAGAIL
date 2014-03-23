@@ -192,6 +192,4 @@ public class IndependentComponentAnalysis implements ProjectionFilter {
     public Matrix getReverseProjection() {
         return reverseProjection;
     }
-
-
 }
