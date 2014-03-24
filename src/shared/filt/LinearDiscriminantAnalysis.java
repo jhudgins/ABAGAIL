@@ -115,7 +115,7 @@ public class LinearDiscriminantAnalysis implements ProjectionFilter {
             instance.setData(instance.getData().minus(mean));
             instance.setData(projection.times(instance.getData()));
         }
-        dataSet.setDescription(null);
+        dataSet.setDescription(new DataSetDescription(dataSet));
     }
    
 
@@ -128,7 +128,7 @@ public class LinearDiscriminantAnalysis implements ProjectionFilter {
             instance.setData(projection.transpose().times(instance.getData()));
             instance.setData(instance.getData().plus(mean));
         }
-        dataSet.setDescription(null);
+        dataSet.setDescription(new DataSetDescription(dataSet));
     }
 
     /**

@@ -42,9 +42,15 @@ public class SumOfSquaresError extends AbstractErrorMeasure
     public double[] gradient(Instance output, Instance example) {      
         double[] errorArray = new double[output.size()];
         Instance label = example.getLabel();
+        int labelIndex = label.getDiscrete();
         for (int i = 0; i < output.size(); i++) {
-            errorArray[i] = (output.getContinuous(i) - label.getContinuous(i))
-                * example.getWeight();
+            double delta;
+            if (i == labelIndex) {
+                delta = output.getContinuous(i) - 1.0;
+            } else {
+                delta = output.getContinuous(i) - 0.0;
+            }
+            errorArray[i] = delta * example.getWeight();
         }
         return errorArray;
     }

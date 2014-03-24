@@ -35,7 +35,9 @@ public class PythonOut {
 
     public static String format(double value) {
         double absValue = Math.abs(value);
-        if (absValue > 1000 || absValue < 0.0001) {
+        if (absValue == 0.0) {
+            return normalFormat.format(value);
+        } else if (absValue > 1000 || absValue < 0.0001) {
             return scientificFormat.format(value);
         } else if (absValue < 0.01) {
             return longFormat.format(value);

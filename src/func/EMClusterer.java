@@ -3,11 +3,14 @@ package func;
 import java.util.Arrays;
 
 import shared.DataSet;
+import shared.DataSetDescription;
 import shared.Instance;
-import dist.*;
+import util.linalg.DenseVector;
+import util.linalg.Vector;
+import dist.AbstractConditionalDistribution;
+import dist.DiscreteDistribution;
 import dist.Distribution;
 import dist.MixtureDistribution;
-import dist.DiscreteDistribution;
 import dist.MultivariateGaussian;
 
 /**
@@ -77,10 +80,7 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
         this(2, TOLERANCE, MAX_ITERATIONS);
     }
 
-    /**
-     * @see func.Classifier#classDistribution(shared.Instance)
-     */
-    public Distribution distributionFor(Instance instance) {
+    public double[] probabilities(Instance instance) {
         // calculate the log probs
         double[] probs = new double[mixture.getComponents().length];
         double maxLog = Double.NEGATIVE_INFINITY;
@@ -98,7 +98,14 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
         for (int i = 0; i < probs.length; i++) {
             probs[i] /= sum;
         }
-        return new DiscreteDistribution(probs);
+        return probs;
+    }
+
+    /**
+     * @see func.Classifier#classDistribution(shared.Instance)
+     */
+    public Distribution distributionFor(Instance instance) {
+        return new DiscreteDistribution(probabilities(instance));
     }
 
     /**
@@ -223,6 +230,39 @@ public class EMClusterer extends AbstractConditionalDistribution implements Func
      */
     public MixtureDistribution getMixture() {
         return mixture;
+    }
+
+    public void addClusterAsAttribute(DataSet set)
+    {
+        Instance[] instances = set.getInstances();
+        for (int i=0; i<set.size(); i++) {
+            // copy the old attributes
+            Vector data = instances[i].getData();
+            DenseVector newData = new DenseVector(data.size() + 2);
+            for (int j=0; j<data.size(); j++) {
+                newData.set(j, data.get(j));
+            }
+
+            // add the most likely cluster as an attribute
+            // also add the probability for that cluster as an attribute
+            double[] probs = probabilities(instances[i]);
+            int bestCluster = 0;
+            double bestProbability = 0.;
+            for (int j=0; j<probs.length; j++) {
+                if (probs[j] > bestProbability) {
+                    bestCluster = j;
+                    bestProbability = probs[j];
+                }
+            }
+
+            // normalize cluster assignment to range of -1 to 1
+            double range = Math.max(1, probs.length - 1);
+            newData.set(data.size(), (double)(bestCluster) / range * 2.0 - 1.0);
+            newData.set(data.size() + 1, bestProbability);
+            instances[i].setData(newData);
+        }
+        // reset the description to reflect the new attributes
+        set.setDescription(new DataSetDescription(set));
     }
     
     /**

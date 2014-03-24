@@ -3,6 +3,7 @@ package func;
 import java.text.DecimalFormat;
 
 import shared.DataSet;
+import shared.DataSetDescription;
 import shared.DistanceMeasure;
 import shared.EuclideanDistance;
 import shared.Instance;
@@ -210,7 +211,6 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
     }
 
 
-
     private void cacluateStats(DataSet set)
     {
         // do some descriptive analysis
@@ -317,6 +317,24 @@ public class KMeansClusterer extends AbstractConditionalDistribution implements 
      */
     public Instance[] getClusterCenters() {
         return clusterCenters;
+    }
+
+    public void addClusterAsAttribute(DataSet set)
+    {
+        Instance[] instances = set.getInstances();
+        double range = Math.max(1, k - 1);
+        for (int i=0; i<set.size(); i++) {
+            Vector data = instances[i].getData();
+            DenseVector newData = new DenseVector(data.size() + 1);
+            for (int j=0; j<data.size(); j++) {
+                newData.set(j, data.get(j));
+            }
+            // normalize cluster assignment to range of -1 to 1
+            newData.set(data.size(), (double)(assignments[i]) / range * 2.0 - 1.0);
+            instances[i].setData(newData);
+        }
+        // reset the description to reflect the new attributes
+        set.setDescription(new DataSetDescription(set));
     }
 
     public void toPython(String name) {
